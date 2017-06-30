@@ -1,0 +1,15 @@
+{
+  "name": "docker_web_app",
+  "version": "1.0.0",
+  "description": "Node.js on Docker",
+  "author": "Luciano Antonio Borguetti Faustino <lucianoborguetti@gmail.com>",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.13.3",
+    "redis": "^2.7.1",
+    "quick-local-ip": "^1.0.7"
+  }
+}
