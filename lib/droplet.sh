@@ -1,6 +1,8 @@
+#!/usr/bin/env nash
+
 import klb/digitalocean/ssh_key
 import klb/digitalocean/droplet
-import lib/map
+import ./lib/map
 
 fn lib_droplet_create(cfg) {
 	# create instance of droplet
