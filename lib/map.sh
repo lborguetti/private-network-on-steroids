@@ -1,3 +1,5 @@
+#!/usr/bin/env nash
+
 # This package implements a naive map implementation using
 # a list of (key, value) tuples.
 # nash does not have a map implementation, yet :-)
