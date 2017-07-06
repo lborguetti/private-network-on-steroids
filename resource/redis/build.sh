@@ -3,7 +3,16 @@
 import ./lib/map
 import ./lib/droplet
 import ./lib/template
-import ./config/var
+import ./config/vars
+
+out, status <= test -e $weave_state_file
+
+if $status != "0" {
+	print("File %s not found!\n", $weave_state_file)
+	exit("127")
+}
+
+import ./config/weave_route.state
 
 droplet_name       = "redis"
 user_data_template = "resource/redis/cloud-config/redis.template"
@@ -24,3 +33,5 @@ cfg <= lib_map_add($cfg, "user_data", $user_data)
 cfg <= lib_map_add($cfg, "region", $digitalocean_region)
 
 lib_droplet_create($cfg)
+
+rm -f $user_data
