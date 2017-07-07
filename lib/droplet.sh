@@ -15,11 +15,11 @@ fn lib_droplet_create(cfg) {
 	ssh_key <= lib_map_get($cfg, "ssh_key")
 	key     <= digitalocean_ssh_key_exists($ssh_key)
 
-	if len($key) != "0" {
-		public_key_file <= lib_map_get($cfg, "public_key_file")
+	if $key != "0" {
+		ssh_key_file <= lib_map_get($cfg, "ssh_key_file")
 
 		# import ssh-key file
-		digitalocean_ssh_key_import($ssh_key, $public_key_file)
+		digitalocean_ssh_key_import($ssh_key, $ssh_key_file)
 	}
 
 	droplet <= digitalocean_droplet_set_ssh_key($droplet, $ssh_key)
