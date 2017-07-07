@@ -1,0 +1,96 @@
+#cloud-config
+
+coreos:
+  units:
+    - name: weave-install.service
+      command: start
+      content: |
+        [Unit]
+        Description=Weave Network install
+        Documentation=http://docs.weave.works/weave/latest_release/
+        Before=weave.service
+        Requires=network-online.target
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        Environment=WEAVE_URL=http://git.io/weave
+        ExecStart=/usr/bin/wget -N -P /opt/bin ${WEAVE_URL}
+        ExecStart=/usr/bin/chmod +x /opt/bin/weave
+        [Install]
+        WantedBy=multi-user.target
+    - name: weave.service
+      command: start
+      content: |
+        [Unit]
+        Description=Weave Network
+        Documentation=http://docs.weave.works/weave/latest_release/
+        Requires=docker.service weave-install.service
+        After=docker.service weave-install.service
+        [Service]
+        User=core
+        Restart=always
+        TimeoutStartSec=0
+        RestartSec=5
+        LimitFSIZE=infinity
+        LimitCPU=infinity
+        LimitAS=infinity
+        LimitNOFILE=64000
+        LimitNPROC=32000
+        ExecStartPre=/opt/bin/weave launch --no-restart --password __WEAVE_PASSWORD__
+        ExecStart=/usr/bin/docker attach weave
+        ExecStop=/opt/bin/weave stop
+        [Install]
+        WantedBy=multi-user.target
+    - name: haproxy.service
+      command: start
+      content: |
+        [Unit]
+        Description=HAProxy - The Reliable, High Performance TCP/HTTP Load Balancer
+        Documentation=http://www.haproxy.org/#docs
+        Requires=weave.service
+        After=weave.service
+        [Service]
+        Environment=HAPROXY_IMAGE=haproxy:1.7-alpine
+        Environment=DOCKER_HOST=unix:///var/run/weave/weave.sock
+        User=core
+        Restart=always
+        TimeoutStartSec=0
+        RestartSec=5
+        LimitFSIZE=infinity
+        LimitCPU=infinity
+        LimitAS=infinity
+        LimitNOFILE=64000
+        LimitNPROC=32000
+        ExecStartPre=-/usr/bin/docker kill %p
+        ExecStartPre=-/usr/bin/docker rm %p
+        ExecStartPre=-/usr/bin/docker pull ${HAPROXY_IMAGE}
+        ExecStart=/usr/bin/docker run --name %p \
+            --log-driver=syslog \
+            -v /etc/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro \
+            ${HAPROXY_IMAGE}
+        ExecStop=/usr/bin/docker stop %p
+        [Install]
+        WantedBy=multi-user.target
+    - name: haproxy-expose.service
+      command: start
+      content: |
+        [Unit]
+        Description=Expose HAProxy Weave network to internet
+        Documentation=http://docs.weave.works/weave/latest_release/
+        Before=haproxy.service
+        Requires=haproxy.service
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/opt/bin/weave expose
+        ExecStart=/usr/bin/sh -c "iptables -t nat -A PREROUTING -p tcp --dport 80 -j DNAT --to $(/opt/bin/weave dns-lookup haproxy)"
+        ExecStop=/opt/bin/weave hide
+        ExecStop=/usr/bin/sh -c "iptables -t nat -D PREROUTING -p tcp --dport 80 -j DNAT --to $(/opt/bin/weave dns-lookup haproxy)"
+        [Install]
+        WantedBy=multi-user.target
+write_files:
+  - path: /etc/haproxy.cfg
+    permissions: 0644
+    owner: root
+    content: |
+__HAPROXY_CFG__

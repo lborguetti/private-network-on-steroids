@@ -10,7 +10,7 @@ fn make_template(file, vars) {
 		var_key     = $var[0]
 		var_value   = $var[1]
 
-		result, err <= echo $result | m4 "-D%{"+$var_key+"}%="+$var_value
+		result, err <= echo $result | m4 "-D__"+$var_key+"__="+$var_value
 
 		if $err != "0" {
 			echo "There was a problem making the template out of "+$file+" for var: "+$var_key
