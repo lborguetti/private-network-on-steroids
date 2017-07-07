@@ -1,3 +1,6 @@
+import klb/digitalocean/droplet
+import klb/digitalocean/ssh_key
+
 fn lib_droplet_create(cfg) {
 	# create instance of droplet
 	name    <= lib_map_get($cfg, "name")
@@ -24,5 +27,6 @@ fn lib_droplet_create(cfg) {
 	droplet   <= digitalocean_droplet_set_user_data_file($droplet, $user_data)
 
 	# create droplet
-	digitalocean_droplet_create($droplet)
+	droplet_info <= digitalocean_droplet_create($droplet)
+	droplet_ip   <= echo $droplet_info | jq ""
 }
