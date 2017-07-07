@@ -1,7 +1,7 @@
 .PHONY: default build push
 
-name_space = lborguetti
-image_name = node-web-app
+name_space = devopsfloripa
+image_name = node-web-app:1
 
 default: build
 
