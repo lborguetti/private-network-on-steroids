@@ -36,6 +36,7 @@ cfg <= lib_map_add($cfg, "name", $droplet_name)
 cfg <= lib_map_add($cfg, "image", $droplet_image)
 cfg <= lib_map_add($cfg, "size", $droplet_size)
 cfg <= lib_map_add($cfg, "ssh_key", $droplet_ssh_key)
+cfg <= lib_map_add($cfg, "ssh_key_file", $droplet_ssh_key_file)
 cfg <= lib_map_add($cfg, "user_data", $user_data)
 cfg <= lib_map_add($cfg, "region", $digitalocean_region)
 
