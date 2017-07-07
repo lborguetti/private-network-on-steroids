@@ -8,7 +8,7 @@ import ./config/vars
 
 weave_password <= uuidgen | sed "s/-//g"
 
-echo "WEAVE_PASSWORD="+$weave_password > $weave_state_file
+echo "WEAVE_PASSWORD=\""+$weave_password+"\"" > $weave_state_file
 
 droplet_name       = "haproxy"
 user_data_template = "resource/haproxy/cloud-config/haproxy.template"
@@ -36,6 +36,6 @@ lib_droplet_create($cfg)
 
 droplet_ip <= digitalocean_droplet_get_ip($droplet_name)
 
-echo "WEAVE_ROUTER="+$droplet_ip | tee -a $weave_state_file
+echo "WEAVE_ROUTER=\""+$droplet_ip+"\"" | tee -a $weave_state_file
 
 rm -f $user_data
