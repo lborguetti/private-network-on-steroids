@@ -47,8 +47,8 @@ coreos:
         [Unit]
         Description=HAProxy - The Reliable, High Performance TCP/HTTP Load Balancer
         Documentation=http://www.haproxy.org/#docs
-        Requires=weave.service
-        After=weave.service
+        Requires=haproxy-reload.service
+        After=haproxy-reload.service
         [Service]
         Environment=HAPROXY_IMAGE=haproxy:1.7-alpine
         Environment=DOCKER_HOST=unix:///var/run/weave/weave.sock
@@ -71,17 +71,34 @@ coreos:
         ExecStop=/usr/bin/docker stop %p
         [Install]
         WantedBy=multi-user.target
+    - name: haproxy-reload.service
+      command: start
+      content: |
+        [Unit]
+        Description=Update HAProxy Backends
+        Requires=weave.service
+        After=weave.service
+        Before=haproxy.service
+        [Service]
+        Restart=always
+        TimeoutStartSec=0
+        RestartSec=5
+        ExecStartPre=/usr/bin/sh -c 'while test -z $(/opt/bin/weave dns-lookup app) ; do sleep 2 ; done'
+        ExecStart=/usr/bin/sh -c "while true; do /opt/bin/haproxy-reload.sh ; sleep 5 ; done"
+        [Install]
+        WantedBy=multi-user.target
     - name: haproxy-expose.service
       command: start
       content: |
         [Unit]
         Description=Expose HAProxy Weave network to internet
         Documentation=http://docs.weave.works/weave/latest_release/
-        Before=haproxy.service
+        After=haproxy.service
         Requires=haproxy.service
         [Service]
         Type=oneshot
         RemainAfterExit=yes
+        ExecStartPre=/usr/bin/sh -c 'while test -z $(/opt/bin/weave dns-lookup haproxy) ; do sleep 2 ; done'
         ExecStart=/opt/bin/weave expose
         ExecStart=/usr/bin/sh -c "iptables -t nat -A PREROUTING -p tcp --dport 80 -j DNAT --to $(/opt/bin/weave dns-lookup haproxy)"
         ExecStop=/opt/bin/weave hide
@@ -89,7 +106,22 @@ coreos:
         [Install]
         WantedBy=multi-user.target
 write_files:
-  - path: /etc/haproxy.cfg
+  - path: /opt/bin/haproxy-reload.sh
+    permissions: 0755
+    owner: root
+    content: |
+      #!/usr/bin/env bash
+      set -e
+      servers=($(/opt/bin/weave dns-lookup app))
+      if test -n ${#servers[*]} ; then
+        cat /etc/haproxy.cfg_template > /tmp/haproxy.cfg
+        for ((i=0;i<${#servers[*]};i++)); do
+          echo "    server app${i} ${servers[$i]}:8080 check inter 1000" >> /tmp/haproxy.cfg
+        done
+        cp /tmp/haproxy.cfg /etc/haproxy.cfg
+        docker kill -s HUP haproxy > /dev/null
+      fi
+  - path: /etc/haproxy.cfg_template
     permissions: 0644
     owner: root
     content: |
