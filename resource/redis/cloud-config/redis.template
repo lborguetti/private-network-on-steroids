@@ -41,6 +41,45 @@ coreos:
         ExecStop=/opt/bin/weave stop
         [Install]
         WantedBy=multi-user.target
+    - name: scope-install.service
+      command: start
+      content: |
+        [Unit]
+        Description=Weave Scope install
+        Documentation=https://www.weave.works/docs/scope/latest/introducing/
+        Before=scope.service
+        Requires=network-online.target
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        Environment=SCOPE_URL=http://git.io/scope
+        ExecStart=/usr/bin/wget -N -P /opt/bin ${SCOPE_URL}
+        ExecStart=/usr/bin/chmod +x /opt/bin/scope
+        [Install]
+        WantedBy=multi-user.target
+    - name: scope.service
+      command: start
+      content: |
+        [Unit]
+        Description=Weave Scope
+        Documentation=https://www.weave.works/docs/scope/latest/introducing/
+        Requires=weave.service scope-install.service
+        After=weave.service scope-install.service
+        [Service]
+        User=core
+        Restart=always
+        TimeoutStartSec=0
+        RestartSec=5
+        LimitFSIZE=infinity
+        LimitCPU=infinity
+        LimitAS=infinity
+        LimitNOFILE=64000
+        LimitNPROC=32000
+        ExecStartPre=/opt/bin/scope launch -no-app
+        ExecStart=/usr/bin/docker attach weavescope
+        ExecStop=/opt/bin/scope stop
+        [Install]
+        WantedBy=multi-user.target
     - name: redis.service
       command: start
       content: |
