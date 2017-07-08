@@ -71,6 +71,20 @@ coreos:
         ExecStop=/usr/bin/docker stop %p
         [Install]
         WantedBy=multi-user.target
+    - name: haproxy-reload.service
+      command: start
+      content: |
+        [Unit]
+        Description=Update HAProxy Backends
+        Requires=haproxy.service
+        After=haproxy.service
+        [Service]
+        Restart=always
+        TimeoutStartSec=0
+        RestartSec=5
+        ExecStart=/usb/bin/sh -c "while true; do /opt/bin/haproxy-reload.sh ; sleep 5 ; done"
+        [Install]
+        WantedBy=multi-user.target
     - name: haproxy-expose.service
       command: start
       content: |
@@ -90,6 +104,21 @@ coreos:
         [Install]
         WantedBy=multi-user.target
 write_files:
+  - path: /opt/bin/haproxy-reload.sh
+    permissions: 0755
+    owner: root
+    content: |
+      #!/usr/bin/env bash
+      set -e
+      servers=($(/opt/bin/weave dns-lookup app))
+      if test -n ${#servers[*]} ; then
+        cat /etc/haproxy.cfg_template > /tmp/haproxy.cfg
+        for ((i=0;i<${#servers[*]};i++)); do
+          echo "    server app${i} ${servers[$i]}:8080 check inter 1000" >> /tmp/haproxy.cfg
+        done
+        cp /tmp/haproxy.cfg /etc/haproxy.cfg
+        docker kill -s HUP haproxy > /dev/null
+      fi
   - path: /etc/haproxy.cfg
     permissions: 0644
     owner: root
