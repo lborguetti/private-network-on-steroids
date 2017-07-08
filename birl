@@ -1,0 +1,15 @@
+#!/usr/bin/env nash
+
+if len($ARGS) == "2" {
+	ids <= doctl compute droplet list --output json | jq ".[].id"
+	ids <= split($ids, "\n")
+	
+	doctl compute droplet delete -f $ids
+	
+	exit("0")
+}
+
+nash resource/redis/build.sh
+nash resource/app/build.sh app1
+nash resource/app/build.sh app2
+nash resource/haproxy/build.sh

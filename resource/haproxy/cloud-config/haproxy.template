@@ -36,7 +36,7 @@ coreos:
         LimitAS=infinity
         LimitNOFILE=64000
         LimitNPROC=32000
-        ExecStartPre=/opt/bin/weave launch --no-restart --password __WEAVE_PASSWORD__
+        ExecStartPre=/opt/bin/weave launch --no-restart __WEAVE_ROUTER__ --password __WEAVE_PASSWORD__
         ExecStart=/usr/bin/docker attach weave
         ExecStop=/opt/bin/weave stop
         [Install]
@@ -77,7 +77,7 @@ coreos:
         [Unit]
         Description=Expose HAProxy Weave network to internet
         Documentation=http://docs.weave.works/weave/latest_release/
-        Before=haproxy.service
+        After=haproxy.service
         Requires=haproxy.service
         [Service]
         Type=oneshot

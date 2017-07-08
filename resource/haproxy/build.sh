@@ -6,9 +6,14 @@ import ./lib/droplet
 import ./lib/template
 import ./config/vars
 
-weave_password <= uuidgen | sed "s/-//g"
+out, status <= test -e $weave_state_file
 
-echo "WEAVE_PASSWORD=\""+$weave_password+"\"" > $weave_state_file
+if $status != "0" {
+	print("File %s not found!\n", $weave_state_file)
+	exit("127")
+}
+
+import ./config/weave_route.state
 
 droplet_name       = "haproxy"
 user_data_template = "resource/haproxy/cloud-config/haproxy.template"
@@ -17,7 +22,8 @@ user_data          = "resource/haproxy/cloud-config/haproxy.yaml"
 haproxy_cfg        <= cat "config/haproxy.cfg"
 
 tpl_vars           = (
-	("WEAVE_PASSWORD" $weave_password)
+	("WEAVE_ROUTER" $WEAVE_ROUTER)
+	("WEAVE_PASSWORD" $WEAVE_PASSWORD)
 	("HAPROXY_CFG" $haproxy_cfg)
 )
 
@@ -36,6 +42,6 @@ lib_droplet_create($cfg)
 
 droplet_ip <= digitalocean_droplet_get_ip($droplet_name)
 
-echo "WEAVE_ROUTER=\""+$droplet_ip+"\"" | tee -a $weave_state_file
+print("You can find your app at: %s", $droplet_ip)
 
 rm -f $user_data
