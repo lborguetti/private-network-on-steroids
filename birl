@@ -5,8 +5,7 @@ if len($ARGS) == "2" {
 	ids <= split($ids, "\n")
 
 	doctl compute droplet delete -f $ids
-
-    rm -f config/weave_route.state
+	rm -f config/weave_route.state
 
 	exit("0")
 }
