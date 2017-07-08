@@ -47,8 +47,8 @@ coreos:
         [Unit]
         Description=HAProxy - The Reliable, High Performance TCP/HTTP Load Balancer
         Documentation=http://www.haproxy.org/#docs
-        Requires=weave.service
-        After=weave.service
+        Requires=haproxy-reload.service
+        After=haproxy-reload.service
         [Service]
         Environment=HAPROXY_IMAGE=haproxy:1.7-alpine
         Environment=DOCKER_HOST=unix:///var/run/weave/weave.sock
@@ -83,6 +83,7 @@ coreos:
         Restart=always
         TimeoutStartSec=0
         RestartSec=5
+        ExecStartPre=/usr/bin/sh -c 'while test -z $(/opt/bin/weave dns-lookup app) ; do sleep 2 ; done'
         ExecStart=/usr/bin/sh -c "while true; do /opt/bin/haproxy-reload.sh ; sleep 5 ; done"
         [Install]
         WantedBy=multi-user.target
