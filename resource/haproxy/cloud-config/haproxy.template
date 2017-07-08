@@ -77,11 +77,12 @@ coreos:
         [Unit]
         Description=Expose HAProxy Weave network to internet
         Documentation=http://docs.weave.works/weave/latest_release/
-        Before=haproxy.service
+        After=haproxy.service
         Requires=haproxy.service
         [Service]
         Type=oneshot
         RemainAfterExit=yes
+        ExecStartPre=/usr/bin/sh -c 'while test -z $(/opt/bin/weave dns-lookup haproxy) ; do sleep 2 ; done'
         ExecStart=/opt/bin/weave expose
         ExecStart=/usr/bin/sh -c "iptables -t nat -A PREROUTING -p tcp --dport 80 -j DNAT --to $(/opt/bin/weave dns-lookup haproxy)"
         ExecStop=/opt/bin/weave hide
