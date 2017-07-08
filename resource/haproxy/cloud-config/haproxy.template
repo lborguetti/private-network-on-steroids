@@ -76,13 +76,14 @@ coreos:
       content: |
         [Unit]
         Description=Update HAProxy Backends
-        Requires=haproxy.service
-        After=haproxy.service
+        Requires=weave.service
+        After=weave.service
+        Before=haproxy.service
         [Service]
         Restart=always
         TimeoutStartSec=0
         RestartSec=5
-        ExecStart=/usb/bin/sh -c "while true; do /opt/bin/haproxy-reload.sh ; sleep 5 ; done"
+        ExecStart=/usr/bin/sh -c "while true; do /opt/bin/haproxy-reload.sh ; sleep 5 ; done"
         [Install]
         WantedBy=multi-user.target
     - name: haproxy-expose.service
@@ -119,7 +120,7 @@ write_files:
         cp /tmp/haproxy.cfg /etc/haproxy.cfg
         docker kill -s HUP haproxy > /dev/null
       fi
-  - path: /etc/haproxy.cfg
+  - path: /etc/haproxy.cfg_template
     permissions: 0644
     owner: root
     content: |
