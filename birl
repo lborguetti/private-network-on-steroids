@@ -3,13 +3,15 @@
 if len($ARGS) == "2" {
 	ids <= doctl compute droplet list --output json | jq ".[].id"
 	ids <= split($ids, "\n")
-	
+
 	doctl compute droplet delete -f $ids
-	
+
+    rm -f config/weave_route.state
+
 	exit("0")
 }
 
+nash resource/haproxy/build.sh
 nash resource/redis/build.sh
 nash resource/app/build.sh app1
 nash resource/app/build.sh app2
-nash resource/haproxy/build.sh
